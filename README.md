@@ -57,14 +57,44 @@ builds a **static export** and publishes it to GitHub Pages on every push to `ma
 > it keeps the API routes). The base path is detected automatically from your
 > repo name via `actions/configure-pages`.
 
+### Connect your Firebase (so the deployed site uses your data)
+
+The Pages workflow injects your Firebase **web config** at build time from
+GitHub secrets. Add these under **Settings → Secrets and variables → Actions →
+New repository secret** (values come from your Firebase Web App config):
+
+| Secret name                                | Example                     |
+| ------------------------------------------ | --------------------------- |
+| `NEXT_PUBLIC_FIREBASE_API_KEY`             | `AIza…`                     |
+| `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`         | `your-app.firebaseapp.com`  |
+| `NEXT_PUBLIC_FIREBASE_PROJECT_ID`          | `your-app`                  |
+| `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`      | `your-app.appspot.com`      |
+| `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID` | `1234567890`                |
+| `NEXT_PUBLIC_FIREBASE_APP_ID`              | `1:1234567890:web:abc123`   |
+
+Then, in the Firebase Console:
+
+1. **Authentication → Sign-in method →** enable **Google**.
+2. **Authentication → Settings → Authorized domains →** add **`<user>.github.io`**
+   (keep `localhost` for local dev). Google sign-in fails without this.
+3. **Firestore Database →** create the database, then **Rules →** paste
+   [`firestore.rules`](firestore.rules) and **Publish**.
+
+Re-run the deploy workflow. Open the site, **Sign in with Google**, and add your
+holdings — they save to `users/{your-uid}` in **your** Firestore. (These web
+config values ship to the browser by design; your data is protected by the
+Firestore rules + auth, not by hiding them.)
+
 ## Local mode vs. Cloud mode
 
 | Mode      | When                                              | Where data lives             |
 | --------- | ------------------------------------------------- | ---------------------------- |
-| **Local** | No Firebase config, or not signed in              | Browser `localStorage`       |
+| **Local** | No Firebase config (dev only)                     | Browser `localStorage` (empty) |
 | **Cloud** | Firebase configured **and** signed in with Google | Firestore (`users/{uid}/…`)  |
 
-The header shows which mode is active.
+When Firebase is configured the app **requires Google sign-in** and shows only
+your Firestore data — there is **no sample/seed data**. The header shows the
+active mode.
 
 ## Connecting Firebase (optional)
 

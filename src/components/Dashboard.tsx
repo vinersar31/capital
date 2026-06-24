@@ -1,7 +1,9 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
 import { useCapital } from "@/hooks/useCapital";
+import { SignInScreen } from "./SignInScreen";
 import { TopBar } from "./TopBar";
 import { HeroTotal } from "./HeroTotal";
 import { SummaryCards } from "./SummaryCards";
@@ -28,7 +30,21 @@ function Skeleton() {
 }
 
 export function Dashboard() {
+  const { configured, user, loading: authLoading } = useAuth();
   const { loading, error } = useCapital();
+
+  // When Firebase is configured, require Google sign-in so the app shows YOUR
+  // Firestore data — never local/sample data.
+  if (configured && authLoading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-white/15 border-t-brand-400" />
+      </main>
+    );
+  }
+  if (configured && !user) {
+    return <SignInScreen />;
+  }
 
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">

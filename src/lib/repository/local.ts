@@ -1,5 +1,4 @@
 import type { Asset, AssetDraft, Snapshot } from "../types";
-import { sampleAssets, sampleSnapshots } from "../sample-data";
 import type { CapitalRepository } from "./types";
 
 const ASSETS_KEY = "capital.assets.v1";
@@ -27,12 +26,7 @@ export class LocalRepository implements CapitalRepository {
     if (typeof window === "undefined") return [];
     try {
       const raw = window.localStorage.getItem(ASSETS_KEY);
-      if (!raw) {
-        const seed = sampleAssets();
-        window.localStorage.setItem(ASSETS_KEY, JSON.stringify(seed));
-        return seed;
-      }
-      return JSON.parse(raw) as Asset[];
+      return raw ? (JSON.parse(raw) as Asset[]) : [];
     } catch {
       return [];
     }
@@ -86,12 +80,7 @@ export class LocalRepository implements CapitalRepository {
     if (typeof window === "undefined") return [];
     try {
       const raw = window.localStorage.getItem(SNAPS_KEY);
-      if (!raw) {
-        const seed = sampleSnapshots();
-        window.localStorage.setItem(SNAPS_KEY, JSON.stringify(seed));
-        return seed;
-      }
-      return JSON.parse(raw) as Snapshot[];
+      return raw ? (JSON.parse(raw) as Snapshot[]) : [];
     } catch {
       return [];
     }
