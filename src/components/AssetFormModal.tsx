@@ -231,14 +231,17 @@ export function AssetFormModal({ open, initial, onClose }: Props) {
             ) : (
               <div>
                 <label className={labelClass} htmlFor="asset-institution">
-                  Institution <span className="text-slate-600">(optional)</span>
+                  {type === "property" ? "Location" : "Institution"}{" "}
+                  <span className="text-slate-600">(optional)</span>
                 </label>
                 <input
                   id="asset-institution"
                   className={inputClass}
                   value={institution}
                   onChange={(e) => setInstitution(e.target.value)}
-                  placeholder="Bank / broker / fund"
+                  placeholder={
+                    type === "property" ? "City / address" : "Bank / broker / fund"
+                  }
                 />
               </div>
             )}
@@ -247,7 +250,11 @@ export function AssetFormModal({ open, initial, onClose }: Props) {
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2">
               <label className={labelClass} htmlFor="asset-value">
-                {type === "loan" ? "Amount owed" : "Value"}
+                {type === "loan"
+                  ? "Amount owed"
+                  : type === "property"
+                    ? "Market value"
+                    : "Value"}
               </label>
               <input
                 id="asset-value"

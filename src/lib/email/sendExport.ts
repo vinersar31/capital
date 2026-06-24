@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 export interface SendExportInput {
-  buffer: Buffer;
+  buffer: Uint8Array;
   filename: string;
   note?: string;
 }
@@ -52,7 +52,7 @@ export async function sendExportEmail(
     attachments: [
       {
         filename: input.filename,
-        content: input.buffer,
+        content: Buffer.from(input.buffer),
         contentType:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       },

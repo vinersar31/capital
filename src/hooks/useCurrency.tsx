@@ -25,6 +25,8 @@ interface CurrencyState {
   setDisplay: (currency: Currency) => void;
   rates: RatesToBase;
   ratesLive: boolean;
+  /** Where the live rate came from (e.g. "Google Finance", "ECB"). */
+  rateSource: string;
   /** EUR→RON rate currently in effect. */
   eurRate: number;
   /** Convert an amount from `from` into the active display currency. */
@@ -41,6 +43,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [display, setDisplayState] = useState<Currency>(BASE_CURRENCY);
   const [rates, setRates] = useState<RatesToBase>(DEFAULT_RATES_TO_BASE);
   const [ratesLive, setRatesLive] = useState(false);
+  const [rateSource, setRateSource] = useState("…");
 
   // Restore the saved display currency once on mount (client only).
   useEffect(() => {
@@ -48,13 +51,14 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     if (saved === "RON" || saved === "EUR") setDisplayState(saved);
   }, []);
 
-  // Fetch live FX rates.
+  // Fetch live FX rates (Google Finance → ECB → offline fallback).
   useEffect(() => {
     let active = true;
-    fetchRatesToBase().then((next) => {
+    fetchRatesToBase().then(({ rates: next, source }) => {
       if (!active) return;
       setRates(next);
-      setRatesLive(next.EUR !== DEFAULT_RATES_TO_BASE.EUR);
+      setRateSource(source);
+      setRatesLive(source !== "fallback");
     });
     return () => {
       active = false;
@@ -87,12 +91,13 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       setDisplay,
       rates,
       ratesLive,
+      rateSource,
       eurRate: rates.EUR,
       toDisplay,
       toBaseCurrency,
       baseToDisplay,
     }),
-    [display, setDisplay, rates, ratesLive, toDisplay, toBaseCurrency, baseToDisplay],
+    [display, setDisplay, rates, ratesLive, rateSource, toDisplay, toBaseCurrency, baseToDisplay],
   );
 
   return (

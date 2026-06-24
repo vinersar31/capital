@@ -16,7 +16,7 @@ export function SummaryCards() {
   const totals = computeTotals(assets, rates);
 
   return (
-    <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
+    <section className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
       {ASSET_TYPES.map((type: AssetType, index) => {
         const meta = ASSET_META[type];
         const bucket = buckets.find((b) => b.type === type);

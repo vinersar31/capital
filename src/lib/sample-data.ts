@@ -94,6 +94,14 @@ export function sampleAssets(): Asset[] {
       institution: "Revolut",
     },
     {
+      id: id("prop"),
+      name: "Apartment (Bucharest)",
+      type: "property",
+      value: 185000,
+      currency: "EUR",
+      institution: "Sector 4, Bucharest",
+    },
+    {
       id: id("pen"),
       name: "Pension – Pillar II",
       type: "pension",
@@ -135,10 +143,7 @@ export function sampleAssets(): Asset[] {
  * populated. The most recent point is recomputed from live data on load.
  */
 export function sampleSnapshots(): Snapshot[] {
-  const series = [
-    -8, // relative thousands offset from a baseline, gently trending up
-    2, 9, 6, 15, 21, 28, 34, 41,
-  ];
+  const series = [-8, 2, 9, 6, 15, 21, 28, 34, 41];
   const baseline = 95000; // RON
   const today = new Date();
   return series.map((delta, i) => {

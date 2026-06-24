@@ -5,7 +5,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Finance-oriented palette
         ink: {
           950: "#070b14",
           900: "#0b1120",

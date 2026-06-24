@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { IS_STATIC_EXPORT } from "@/lib/runtime";
 import { useCapital } from "./useCapital";
 import { useCurrency } from "./useCurrency";
 
@@ -23,7 +24,7 @@ function currentMonthKey(): string {
 /**
  * Opportunistic "monthly auto-email": when enabled, the first time the app is
  * opened in a new calendar month it emails the Excel report (if SMTP is set).
- * Works for both local and cloud data since the client already holds it.
+ * Disabled entirely in static-export builds (no server to send from).
  */
 export function useAutoEmail() {
   const { assets, snapshots, loading } = useCapital();
@@ -50,6 +51,11 @@ export function useAutoEmail() {
   }, []);
 
   const doSend = useCallback(async (): Promise<boolean> => {
+    if (IS_STATIC_EXPORT) {
+      setStatus("skipped");
+      setMessage("Email needs a server deployment (e.g. Vercel).");
+      return false;
+    }
     setStatus("sending");
     setMessage(null);
     try {
@@ -83,6 +89,7 @@ export function useAutoEmail() {
 
   // Fire once per session when a new month is due.
   useEffect(() => {
+    if (IS_STATIC_EXPORT) return;
     if (!hydrated || loading || !enabled) return;
     if (attempted.current) return;
     if (!assets.length) return;

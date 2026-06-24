@@ -8,7 +8,13 @@ export interface AssetTypeMeta {
   /** Hex color used by charts. */
   color: string;
   /** Lucide icon name handled in components. */
-  icon: "trending-up" | "landmark" | "piggy-bank" | "shield" | "credit-card";
+  icon:
+    | "trending-up"
+    | "landmark"
+    | "piggy-bank"
+    | "building"
+    | "shield"
+    | "credit-card";
   description: string;
 }
 
@@ -36,6 +42,14 @@ export const ASSET_META: Record<AssetType, AssetTypeMeta> = {
     color: "#34d399",
     icon: "piggy-bank",
     description: "Deposits, savings accounts & cash",
+  },
+  property: {
+    label: "Property",
+    plural: "Property & Real Estate",
+    text: "text-orange-400",
+    color: "#fb923c",
+    icon: "building",
+    description: "Apartments, houses & land (market value)",
   },
   pension: {
     label: "Pension",

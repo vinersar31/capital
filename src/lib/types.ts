@@ -6,12 +6,19 @@ export type Currency = "RON" | "EUR";
 export const CURRENCIES: Currency[] = ["RON", "EUR"];
 
 /** High-level asset categories shown on the dashboard. */
-export type AssetType = "stock" | "bond" | "savings" | "pension" | "loan";
+export type AssetType =
+  | "stock"
+  | "bond"
+  | "savings"
+  | "property"
+  | "pension"
+  | "loan";
 
 export const ASSET_TYPES: AssetType[] = [
   "stock",
   "bond",
   "savings",
+  "property",
   "pension",
   "loan",
 ];

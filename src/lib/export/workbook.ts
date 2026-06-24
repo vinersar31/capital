@@ -14,8 +14,12 @@ export interface WorkbookInput {
 const MONEY = "#,##0";
 const MONEY2 = "#,##0.00";
 
-/** Build an .xlsx report of the portfolio and return it as a Buffer. */
-export async function buildWorkbook(input: WorkbookInput): Promise<Buffer> {
+/**
+ * Build an .xlsx report of the portfolio and return the raw bytes.
+ * Returns a `Uint8Array` so this works both server-side (email) and in the
+ * browser (client-side download).
+ */
+export async function buildWorkbook(input: WorkbookInput): Promise<Uint8Array> {
   const { assets, snapshots, eurRate } = input;
   const generatedAt = input.generatedAt ?? new Date();
   const toRON = (value: number, currency: string) =>
@@ -129,5 +133,5 @@ export async function buildWorkbook(input: WorkbookInput): Promise<Buffer> {
   hist.getColumn("valueRon").numFmt = MONEY;
 
   const buffer = await wb.xlsx.writeBuffer();
-  return Buffer.from(buffer as ArrayBuffer);
+  return new Uint8Array(buffer as ArrayBuffer);
 }

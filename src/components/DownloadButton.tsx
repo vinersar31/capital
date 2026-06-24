@@ -4,6 +4,7 @@ import { useState } from "react";
 import { AlertCircle, Download, Loader2 } from "lucide-react";
 import { useCapital } from "@/hooks/useCapital";
 import { useCurrency } from "@/hooks/useCurrency";
+import { reportFilename } from "@/lib/export/parseBody";
 
 type Status = "idle" | "working" | "error";
 
@@ -15,21 +16,16 @@ export function DownloadButton() {
   const download = async () => {
     setStatus("working");
     try {
-      const res = await fetch("/api/export/download", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assets, snapshots, eurRate }),
+      // Generated client-side so it also works on static hosts (GitHub Pages).
+      const { buildWorkbook } = await import("@/lib/export/workbook");
+      const bytes = await buildWorkbook({ assets, snapshots, eurRate });
+      const blob = new Blob([bytes as unknown as BlobPart], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });
-      if (!res.ok) {
-        setStatus("error");
-        window.setTimeout(() => setStatus("idle"), 3000);
-        return;
-      }
-      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = url;
-      link.download = `capital-report-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      link.download = reportFilename();
       document.body.appendChild(link);
       link.click();
       link.remove();

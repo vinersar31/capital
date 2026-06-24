@@ -11,7 +11,7 @@ export type ParseResult =
   | { ok: true; data: ParsedExport }
   | { ok: false; status: number; error: string };
 
-/** Validate and normalize the JSON body shared by the export endpoints. */
+/** Validate and normalize the JSON body used by the export endpoint. */
 export async function parseExportRequest(req: Request): Promise<ParseResult> {
   let body: { assets?: unknown; snapshots?: unknown; eurRate?: unknown };
   try {
@@ -31,7 +31,7 @@ export async function parseExportRequest(req: Request): Promise<ParseResult> {
   const snapshots = Array.isArray(body.snapshots)
     ? (body.snapshots as Snapshot[])
     : [];
-  const eurRate = Number(body.eurRate) > 0 ? Number(body.eurRate) : 4.98;
+  const eurRate = Number(body.eurRate) > 0 ? Number(body.eurRate) : 5.24;
 
   return { ok: true, data: { assets, snapshots, eurRate } };
 }

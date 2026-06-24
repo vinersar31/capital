@@ -14,8 +14,8 @@ function Skeleton() {
   return (
     <div className="space-y-4 sm:space-y-5">
       <div className="h-40 animate-pulse rounded-2xl bg-white/5" />
-      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-5">
-        {Array.from({ length: 5 }).map((_, i) => (
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 xl:grid-cols-6">
+        {Array.from({ length: 6 }).map((_, i) => (
           <div key={i} className="h-28 animate-pulse rounded-2xl bg-white/5" />
         ))}
       </div>
@@ -67,8 +67,7 @@ export function Dashboard() {
       </div>
 
       <footer className="mt-10 pb-6 text-center text-xs text-slate-600">
-        Capital · all amounts normalized to RON · FX rates from the European
-        Central Bank
+        Capital · all amounts normalized to RON · EUR/RON from Google Finance
       </footer>
     </main>
   );

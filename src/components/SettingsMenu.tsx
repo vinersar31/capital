@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check, Loader2, Send, Settings, TriangleAlert } from "lucide-react";
 import clsx from "clsx";
 import { useAutoEmail } from "@/hooks/useAutoEmail";
+import { IS_STATIC_EXPORT } from "@/lib/runtime";
 
 function monthLabel(key: string | null): string {
   if (!key) return "not yet";
@@ -38,6 +39,7 @@ export function SettingsMenu() {
   }, [open]);
 
   const busy = status === "sending";
+  const disabled = IS_STATIC_EXPORT;
 
   return (
     <div className="relative" ref={ref}>
@@ -71,59 +73,70 @@ export function SettingsMenu() {
             <button
               type="button"
               role="switch"
-              aria-checked={enabled}
+              aria-checked={enabled && !disabled}
+              disabled={disabled}
               onClick={() => setEnabled(!enabled)}
               className={clsx(
-                "relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors",
-                enabled ? "bg-brand-500" : "bg-white/10",
+                "relative mt-0.5 h-5 w-9 shrink-0 rounded-full transition-colors disabled:opacity-50",
+                enabled && !disabled ? "bg-brand-500" : "bg-white/10",
               )}
             >
               <span
                 className={clsx(
                   "absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform",
-                  enabled ? "translate-x-4" : "translate-x-0.5",
+                  enabled && !disabled ? "translate-x-4" : "translate-x-0.5",
                 )}
               />
             </button>
           </div>
 
-          <div className="mt-3 border-t border-white/5 pt-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500">
-                Last sent: <span className="text-slate-300">{monthLabel(lastSent)}</span>
-              </span>
-              <button
-                type="button"
-                onClick={() => void sendNow()}
-                disabled={busy}
-                className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 transition-colors hover:bg-white/5 disabled:opacity-60"
-              >
-                {busy ? (
-                  <Loader2 size={13} className="animate-spin" />
-                ) : (
-                  <Send size={13} />
-                )}
-                Send now
-              </button>
-            </div>
+          {disabled ? (
+            <p className="mt-3 flex items-start gap-1.5 border-t border-white/5 pt-3 text-xs text-amber-300">
+              <TriangleAlert size={13} className="mt-0.5 shrink-0" />
+              Email isn&apos;t available on this static deployment. Use{" "}
+              <span className="font-medium">Download</span>, or deploy on a
+              server (e.g. Vercel) for email.
+            </p>
+          ) : (
+            <div className="mt-3 border-t border-white/5 pt-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">
+                  Last sent:{" "}
+                  <span className="text-slate-300">{monthLabel(lastSent)}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void sendNow()}
+                  disabled={busy}
+                  className="inline-flex items-center gap-1.5 rounded-md border border-white/10 px-2.5 py-1 text-xs font-medium text-slate-200 transition-colors hover:bg-white/5 disabled:opacity-60"
+                >
+                  {busy ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <Send size={13} />
+                  )}
+                  Send now
+                </button>
+              </div>
 
-            {message && (
-              <p
-                className={clsx(
-                  "mt-2 flex items-center gap-1.5 text-xs",
-                  status === "sent" && "text-brand-300",
-                  status === "error" && "text-rose-300",
-                  status === "skipped" && "text-amber-300",
-                )}
-              >
-                {status === "sent" && <Check size={13} />}
-                {(status === "error" || status === "skipped") && (
-                  <TriangleAlert size={13} />
-                )}
-                {message}
-              </p>
-            )}
-          </div>
+              {message && (
+                <p
+                  className={clsx(
+                    "mt-2 flex items-center gap-1.5 text-xs",
+                    status === "sent" && "text-brand-300",
+                    status === "error" && "text-rose-300",
+                    status === "skipped" && "text-amber-300",
+                  )}
+                >
+                  {status === "sent" && <Check size={13} />}
+                  {(status === "error" || status === "skipped") && (
+                    <TriangleAlert size={13} />
+                  )}
+                  {message}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

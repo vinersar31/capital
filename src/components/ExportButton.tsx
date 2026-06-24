@@ -5,6 +5,7 @@ import { AlertCircle, Check, Loader2, Mail } from "lucide-react";
 import clsx from "clsx";
 import { useCapital } from "@/hooks/useCapital";
 import { useCurrency } from "@/hooks/useCurrency";
+import { IS_STATIC_EXPORT } from "@/lib/runtime";
 
 type Status = "idle" | "sending" | "sent" | "error";
 
@@ -15,6 +16,11 @@ export function ExportButton() {
   const [message, setMessage] = useState<string | null>(null);
 
   const send = async () => {
+    if (IS_STATIC_EXPORT) {
+      setStatus("error");
+      setMessage("Email needs a server (use Download here, or deploy on Vercel).");
+      return;
+    }
     setStatus("sending");
     setMessage(null);
     try {
@@ -47,7 +53,7 @@ export function ExportButton() {
       {message && (
         <span
           className={clsx(
-            "hidden max-w-[220px] truncate text-xs md:inline",
+            "hidden max-w-[240px] truncate text-xs md:inline",
             status === "error" ? "text-rose-300" : "text-brand-300",
           )}
           title={message}

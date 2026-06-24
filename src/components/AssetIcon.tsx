@@ -1,4 +1,5 @@
 import {
+  Building2,
   CreditCard,
   Landmark,
   PiggyBank,
@@ -13,6 +14,7 @@ const ICONS: Record<AssetTypeMeta["icon"], LucideIcon> = {
   "trending-up": TrendingUp,
   landmark: Landmark,
   "piggy-bank": PiggyBank,
+  building: Building2,
   shield: Shield,
   "credit-card": CreditCard,
 };

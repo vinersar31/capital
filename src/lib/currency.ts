@@ -1,4 +1,5 @@
 import type { Currency } from "./types";
+import { IS_STATIC_EXPORT } from "./runtime";
 
 /** Base currency the whole app normalizes to. */
 export const BASE_CURRENCY: Currency = "RON";
@@ -9,10 +10,16 @@ export const BASE_CURRENCY: Currency = "RON";
  */
 export const DEFAULT_RATES_TO_BASE: Record<Currency, number> = {
   RON: 1,
-  EUR: 4.98,
+  EUR: 5.24,
 };
 
 export type RatesToBase = Record<Currency, number>;
+
+export interface RateResult {
+  rates: RatesToBase;
+  /** Where the live rate came from: "Google Finance", "ECB", or "fallback". */
+  source: string;
+}
 
 /** Convert `amount` from one currency to another using RON-based rates. */
 export function convert(
@@ -32,23 +39,44 @@ export function toBase(amount: number, from: Currency, rates: RatesToBase): numb
 }
 
 /**
- * Fetch live EUR→RON rate from the keyless Frankfurter API (ECB data).
- * Falls back to the default rate on any error so the app keeps working offline.
+ * Fetch the live EUR→RON rate, preferring **Google Finance** (via our own
+ * `/api/fx` route), then the keyless **Frankfurter/ECB** API (works on static
+ * hosts), and finally an offline default — so the app never gets stuck on a
+ * stale hard-coded number.
  */
-export async function fetchRatesToBase(): Promise<RatesToBase> {
+export async function fetchRatesToBase(): Promise<RateResult> {
+  // 1) Google Finance, proxied by our server route (skipped on static export).
+  if (!IS_STATIC_EXPORT) {
+    try {
+      const res = await fetch("/api/fx", { cache: "no-store" });
+      if (res.ok) {
+        const data: { ok?: boolean; rate?: number } = await res.json();
+        if (data.ok && typeof data.rate === "number" && data.rate > 0) {
+          return { rates: { RON: 1, EUR: data.rate }, source: "Google Finance" };
+        }
+      }
+    } catch {
+      /* fall through to the next source */
+    }
+  }
+
+  // 2) Frankfurter (ECB reference rates) — keyless and CORS-enabled.
   try {
     const res = await fetch(
       "https://api.frankfurter.app/latest?from=EUR&to=RON",
       { cache: "no-store" },
     );
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const data: { rates?: { RON?: number } } = await res.json();
-    const eur = data.rates?.RON;
-    if (typeof eur === "number" && eur > 0) {
-      return { RON: 1, EUR: eur };
+    if (res.ok) {
+      const data: { rates?: { RON?: number } } = await res.json();
+      const eur = data.rates?.RON;
+      if (typeof eur === "number" && eur > 0) {
+        return { rates: { RON: 1, EUR: eur }, source: "ECB" };
+      }
     }
-    throw new Error("Missing RON rate in response");
   } catch {
-    return { ...DEFAULT_RATES_TO_BASE };
+    /* fall through to the offline fallback */
   }
+
+  // 3) Offline fallback.
+  return { rates: { ...DEFAULT_RATES_TO_BASE }, source: "fallback" };
 }

@@ -9,7 +9,7 @@ import { SettingsMenu } from "./SettingsMenu";
 
 export function TopBar() {
   const { mode } = useCapital();
-  const { eurRate, ratesLive } = useCurrency();
+  const { eurRate, ratesLive, rateSource } = useCurrency();
 
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -26,7 +26,7 @@ export function TopBar() {
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <span
           className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-ink-850 px-2.5 py-1.5 text-xs text-slate-400"
-          title={ratesLive ? "Live ECB rate" : "Fallback rate (offline)"}
+          title={ratesLive ? `Live EUR/RON via ${rateSource}` : "Offline fallback rate"}
         >
           <RefreshCw
             size={12}
@@ -37,6 +37,9 @@ export function TopBar() {
             {eurRate.toFixed(2)}
           </span>
           &nbsp;RON
+          {ratesLive && (
+            <span className="hidden text-slate-500 lg:inline">· {rateSource}</span>
+          )}
         </span>
 
         <span
