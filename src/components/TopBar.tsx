@@ -5,6 +5,7 @@ import { useCapital } from "@/hooks/useCapital";
 import { useCurrency } from "@/hooks/useCurrency";
 import { CurrencyToggle } from "./CurrencyToggle";
 import { AuthButton } from "./AuthButton";
+import { SettingsMenu } from "./SettingsMenu";
 
 export function TopBar() {
   const { mode } = useCapital();
@@ -57,6 +58,7 @@ export function TopBar() {
         </span>
 
         <CurrencyToggle />
+        <SettingsMenu />
         <AuthButton />
       </div>
     </header>

@@ -7,7 +7,7 @@ A modern personal **net-worth dashboard**. Track everything you own and owe in o
 - **Finance-oriented charts** — net-worth trend, allocation donut, and currency exposure.
 - **Per-asset value history** — every holding keeps a dated value history, shown as inline sparklines and in the edit dialog.
 - **Manage holdings** — add / edit / delete assets and liabilities in a clean dashboard.
-- **Email an Excel report** — one click generates a multi-sheet `.xlsx` and emails it to a recipient kept in server secrets.
+- **Export** — **download** the report as `.xlsx` or **email** it; optional **monthly auto-email** sends it for you.
 - **Firebase Firestore + Google sign-in** — your data syncs to the cloud, isolated per user.
 - **Works instantly** — runs in **local mode** (browser storage + seeded sample data) until you connect Firebase. No setup required to try it.
 
@@ -93,6 +93,26 @@ password as `SMTP_PASS`. Restart the dev server after editing `.env.local`.
 > endpoint can never be used to send mail to arbitrary addresses, and the
 > address is masked in the UI confirmation.
 
+### Download instead of email
+
+The **Download** button (next to **Email Excel**) posts to
+`src/app/api/export/download/route.ts`, which returns the same `.xlsx` as a
+file download — no SMTP setup required.
+
+### Monthly auto-email
+
+Open the **gear menu** (top bar) and toggle **Monthly auto-email**. When on, the
+first time you open the app in a new calendar month it emails the report
+automatically (it also offers **Send now**). The schedule and last-sent month
+are stored in `localStorage`, so it works in both local and cloud mode without
+any backend cron. It silently no-ops until SMTP is configured.
+
+> Prefer a true server schedule? Because local-mode data lives in the browser,
+> a cron can only build the report for **cloud** users. Add the Firebase Admin
+> SDK and a [Vercel Cron](https://vercel.com/docs/cron-jobs) (or GitHub Action)
+> that reads `users/{uid}` from Firestore and calls the same `buildWorkbook` +
+> `sendExportEmail` helpers.
+
 ## How money is calculated
 
 - Each holding stores its own `value` and `currency` (`RON` or `EUR`).
@@ -105,18 +125,20 @@ password as `SMTP_PASS`. Restart the dev server after editing `.env.local`.
 ```
 src/
 ├─ app/                 # Next.js App Router (layout, page, providers, globals)
-│  └─ api/export/       # POST route: build .xlsx + email it (server-only)
+│  └─ api/export/       # POST: email .xlsx · /download returns the file
 ├─ components/          # Dashboard UI
 │  ├─ charts/           # NetWorth / Allocation / Currency charts
 │  ├─ HeroTotal.tsx     # Big total-capital number
 │  ├─ SummaryCards.tsx  # Per-category cards
 │  ├─ Sparkline.tsx     # Per-asset history trend line
+│  ├─ DownloadButton.tsx# Download .xlsx report
 │  ├─ ExportButton.tsx  # Email Excel report
+│  ├─ SettingsMenu.tsx  # Monthly auto-email toggle
 │  ├─ AssetsPanel.tsx   # Holdings table + filters
 │  └─ AssetFormModal.tsx# Add / edit form
-├─ hooks/               # Auth, Currency & Capital React contexts
+├─ hooks/               # Auth, Currency, Capital & AutoEmail contexts
 └─ lib/                 # Types, calculations, currency, Firebase, repositories
-   ├─ export/           # Excel workbook builder (exceljs)
+   ├─ export/           # Excel workbook builder (exceljs) + body parser
    ├─ email/            # SMTP sender (nodemailer)
    └─ repository/       # Cloud (Firestore) + Local (localStorage) backends
 ```

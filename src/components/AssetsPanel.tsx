@@ -12,6 +12,7 @@ import { AssetIcon } from "./AssetIcon";
 import { AssetFormModal } from "./AssetFormModal";
 import { Sparkline } from "./Sparkline";
 import { ExportButton } from "./ExportButton";
+import { DownloadButton } from "./DownloadButton";
 
 type Filter = AssetType | "all";
 
@@ -56,6 +57,7 @@ export function AssetsPanel() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <DownloadButton />
           <ExportButton />
           <button
             type="button"
