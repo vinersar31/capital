@@ -63,3 +63,30 @@ export function formatMonth(date: string | number | Date): string {
     year: "2-digit",
   }).format(new Date(date));
 }
+
+/** Full date + time, e.g. "28 iun. 2026, 14:30". */
+export function formatDateTime(date: string | number | Date): string {
+  return new Intl.DateTimeFormat("ro-RO", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(date));
+}
+
+/** Human-friendly relative time, e.g. "just now", "5m ago", "3d ago". */
+export function formatRelativeTime(date: number | Date): string {
+  const then = date instanceof Date ? date.getTime() : date;
+  const diff = Date.now() - then;
+  if (!Number.isFinite(diff)) return "—";
+  const sec = Math.round(diff / 1000);
+  if (sec < 45) return "just now";
+  const min = Math.round(sec / 60);
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.round(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.round(hr / 24);
+  if (day < 30) return `${day}d ago`;
+  return formatDate(then);
+}

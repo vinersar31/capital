@@ -1,15 +1,20 @@
 "use client";
 
-import { Cloud, HardDrive, LineChart, RefreshCw } from "lucide-react";
+import { Cloud, Clock, HardDrive, LineChart, RefreshCw } from "lucide-react";
 import { useCapital } from "@/hooks/useCapital";
 import { useCurrency } from "@/hooks/useCurrency";
+import { formatDateTime, formatRelativeTime } from "@/lib/format";
 import { CurrencyToggle } from "./CurrencyToggle";
 import { AuthButton } from "./AuthButton";
 import { SettingsMenu } from "./SettingsMenu";
 
 export function TopBar() {
-  const { mode } = useCapital();
+  const { assets, mode } = useCapital();
   const { eurRate, ratesLive, rateSource } = useCurrency();
+
+  const lastUpdated = assets.length
+    ? Math.max(...assets.map((a) => a.updatedAt))
+    : null;
 
   return (
     <header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -59,6 +64,19 @@ export function TopBar() {
             {mode === "cloud" ? "Cloud" : "Local"}
           </span>
         </span>
+
+        {lastUpdated !== null && (
+          <span
+            className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-ink-850 px-2.5 py-1.5 text-xs text-slate-400"
+            title={`Last updated ${formatDateTime(lastUpdated)}`}
+          >
+            <Clock size={13} className="text-slate-500" />
+            <span className="hidden sm:inline">Updated</span>
+            <span className="font-semibold text-slate-200">
+              {formatRelativeTime(lastUpdated)}
+            </span>
+          </span>
+        )}
 
         <CurrencyToggle />
         <SettingsMenu />
