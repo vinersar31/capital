@@ -3,7 +3,7 @@
 A modern personal **net-worth dashboard**. Track everything you own and owe in one place — stocks, bonds, savings accounts, private pensions (**Pilonul II & III**) and loans — across multiple currencies, with live charts.
 
 - **Big total on top** — your entire capital at a glance, with month-over-month change.
-- **Multi-currency** — hold assets in **RON (LEI)** and **EUR**; everything is normalized to a base currency using **live ECB exchange rates**.
+- **Multi-currency** — hold assets in **RON (LEI)** and **EUR**; everything is normalized to a base currency using the **BNR official daily reference rate** (with ECB as a fallback).
 - **Finance-oriented charts** — net-worth trend, allocation donut, and currency exposure.
 - **Per-asset value history** — every holding keeps a dated value history, shown as inline sparklines and in the edit dialog.
 - **Manage holdings** — add / edit / delete assets and liabilities in a clean dashboard.
@@ -18,7 +18,7 @@ A modern personal **net-worth dashboard**. Track everything you own and owe in o
 - [Recharts](https://recharts.org/) for charts
 - [Firebase](https://firebase.google.com/) Authentication + Firestore
 - [ExcelJS](https://github.com/exceljs/exceljs) for reports, [Nodemailer](https://nodemailer.com/) for email
-- [Google Finance](https://www.google.com/finance/quote/EUR-RON) for the live EUR/RON rate (keyless [Frankfurter](https://www.frankfurter.app/) / ECB fallback)
+- [BNR](https://curs.bnr.ro/nbrfxrates.xml) official daily reference rate for EUR/RON (keyless [Frankfurter](https://www.frankfurter.app/) / ECB fallback)
 
 ## Getting started
 
