@@ -25,7 +25,7 @@ interface CurrencyState {
   setDisplay: (currency: Currency) => void;
   rates: RatesToBase;
   ratesLive: boolean;
-  /** Where the live rate came from (e.g. "Google Finance", "ECB"). */
+  /** Where the live rate came from (e.g. "BNR", "ECB"). */
   rateSource: string;
   /** EUR→RON rate currently in effect. */
   eurRate: number;
@@ -51,7 +51,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     if (saved === "RON" || saved === "EUR") setDisplayState(saved);
   }, []);
 
-  // Fetch live FX rates (Google Finance → ECB → offline fallback).
+  // Fetch live FX rates (BNR → ECB → offline fallback).
   useEffect(() => {
     let active = true;
     fetchRatesToBase().then(({ rates: next, source }) => {

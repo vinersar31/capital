@@ -17,7 +17,7 @@ export type RatesToBase = Record<Currency, number>;
 
 export interface RateResult {
   rates: RatesToBase;
-  /** Where the live rate came from: "Google Finance", "ECB", or "fallback". */
+  /** Where the live rate came from: "BNR", "ECB", or "fallback". */
   source: string;
 }
 
@@ -39,20 +39,20 @@ export function toBase(amount: number, from: Currency, rates: RatesToBase): numb
 }
 
 /**
- * Fetch the live EUR→RON rate, preferring **Google Finance** (via our own
- * `/api/fx` route), then the keyless **Frankfurter/ECB** API (works on static
- * hosts), and finally an offline default — so the app never gets stuck on a
- * stale hard-coded number.
+ * Fetch the live EUR→RON rate, preferring the **BNR** official daily reference
+ * rate (via our own `/api/fx` route), then the keyless **Frankfurter/ECB** API
+ * (works on static hosts), and finally an offline default — so the app never
+ * gets stuck on a stale hard-coded number.
  */
 export async function fetchRatesToBase(): Promise<RateResult> {
-  // 1) Google Finance, proxied by our server route (skipped on static export).
+  // 1) BNR reference rate, proxied by our server route (skipped on static export).
   if (!IS_STATIC_EXPORT) {
     try {
       const res = await fetch("/api/fx", { cache: "no-store" });
       if (res.ok) {
-        const data: { ok?: boolean; rate?: number } = await res.json();
+        const data: { ok?: boolean; rate?: number; source?: string } = await res.json();
         if (data.ok && typeof data.rate === "number" && data.rate > 0) {
-          return { rates: { RON: 1, EUR: data.rate }, source: "Google Finance" };
+          return { rates: { RON: 1, EUR: data.rate }, source: data.source ?? "BNR" };
         }
       }
     } catch {

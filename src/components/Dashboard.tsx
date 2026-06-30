@@ -83,7 +83,7 @@ export function Dashboard() {
       </div>
 
       <footer className="mt-10 pb-6 text-center text-xs text-slate-600">
-        Capital · all amounts normalized to RON · EUR/RON from Google Finance
+        Capital · all amounts normalized to RON · EUR/RON from BNR
       </footer>
     </main>
   );
