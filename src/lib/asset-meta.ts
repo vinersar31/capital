@@ -16,6 +16,8 @@ export interface AssetTypeMeta {
     | "shield"
     | "credit-card";
   description: string;
+  /** Whether the holding can be readily accessed, is locked, or is a liability. */
+  liquidity: "accessible" | "locked" | "liability";
 }
 
 export const ASSET_META: Record<AssetType, AssetTypeMeta> = {
@@ -26,6 +28,7 @@ export const ASSET_META: Record<AssetType, AssetTypeMeta> = {
     color: "#38bdf8",
     icon: "trending-up",
     description: "Shares, ETFs and equity funds",
+    liquidity: "accessible",
   },
   bond: {
     label: "Bond",
@@ -34,6 +37,7 @@ export const ASSET_META: Record<AssetType, AssetTypeMeta> = {
     color: "#a78bfa",
     icon: "landmark",
     description: "Government & corporate bonds",
+    liquidity: "locked",
   },
   savings: {
     label: "Savings",
@@ -42,6 +46,7 @@ export const ASSET_META: Record<AssetType, AssetTypeMeta> = {
     color: "#34d399",
     icon: "piggy-bank",
     description: "Deposits, savings accounts & cash",
+    liquidity: "accessible",
   },
   property: {
     label: "Property",
@@ -50,6 +55,7 @@ export const ASSET_META: Record<AssetType, AssetTypeMeta> = {
     color: "#fb923c",
     icon: "building",
     description: "Apartments, houses & land (market value)",
+    liquidity: "locked",
   },
   pension: {
     label: "Pension",
@@ -58,6 +64,7 @@ export const ASSET_META: Record<AssetType, AssetTypeMeta> = {
     color: "#fbbf24",
     icon: "shield",
     description: "Private pension — Pilonul II & III",
+    liquidity: "locked",
   },
   loan: {
     label: "Loan",
@@ -66,6 +73,7 @@ export const ASSET_META: Record<AssetType, AssetTypeMeta> = {
     color: "#fb7185",
     icon: "credit-card",
     description: "Mortgages, credit & liabilities",
+    liquidity: "liability",
   },
 };
 
