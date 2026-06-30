@@ -22,14 +22,17 @@ function Skeleton() {
           <div key={i} className="h-28 animate-pulse rounded-2xl bg-white/5" />
         ))}
       </div>
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-3">
-        <div className="h-80 animate-pulse rounded-2xl bg-white/5 lg:col-span-2" />
-        <div className="h-80 animate-pulse rounded-2xl bg-white/5" />
-      </div>
-      <div className="grid gap-4 sm:gap-5 lg:grid-cols-3">
-        <div className="h-64 animate-pulse rounded-2xl bg-white/5 lg:col-span-2" />
+      <div className="h-72 animate-pulse rounded-2xl bg-white/5" />
+      <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
+        <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
         <div className="h-64 animate-pulse rounded-2xl bg-white/5" />
       </div>
+      <div className="grid gap-4 sm:gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="h-40 animate-pulse rounded-2xl bg-white/5" />
+        <div className="h-40 animate-pulse rounded-2xl bg-white/5" />
+        <div className="h-40 animate-pulse rounded-2xl bg-white/5" />
+      </div>
+      <div className="h-80 animate-pulse rounded-2xl bg-white/5" />
     </div>
   );
 }
@@ -70,21 +73,16 @@ export function Dashboard() {
             <HeroTotal />
             <SummaryCards />
 
-            <div className="grid gap-4 sm:gap-5 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <NetWorthChart />
-              </div>
-              <AllocationChart />
-            </div>
+            <NetWorthChart />
 
-            <div className="grid gap-4 sm:gap-5 lg:grid-cols-3">
-              <div className="lg:col-span-2">
-                <AssetsPanel />
-              </div>
+            <div className="grid gap-4 sm:gap-5 lg:grid-cols-2">
+              <AllocationChart />
               <CurrencyChart />
             </div>
 
             <Insights />
+
+            <AssetsPanel />
           </div>
         )}
       </div>

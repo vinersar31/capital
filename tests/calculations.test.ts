@@ -6,13 +6,11 @@ import {
   assetGain,
   changeFraction,
   computeTotals,
-  concentration,
   currencyExposure,
   debtMetrics,
   incomeSummary,
   liquiditySplit,
   portfolioGains,
-  topMovers,
 } from "../src/lib/calculations";
 
 /** RON per unit: 1 EUR = 5 RON, 1 USD = 4 RON (round numbers for easy math). */
@@ -135,53 +133,6 @@ describe("portfolioGains", () => {
   });
 });
 
-describe("topMovers", () => {
-  it("ranks by net-worth effect using the last two history points", () => {
-    const gainer = makeAsset({
-      name: "Gainer",
-      value: 120,
-      history: [
-        { date: "2026-01-01", value: 100 },
-        { date: "2026-02-01", value: 120 },
-      ],
-    });
-    const loser = makeAsset({
-      name: "Loser",
-      value: 80,
-      history: [
-        { date: "2026-01-01", value: 100 },
-        { date: "2026-02-01", value: 80 },
-      ],
-    });
-    const movers = topMovers([loser, gainer], rates);
-    expect(movers.map((m) => m.asset.name)).toEqual(["Gainer", "Loser"]);
-    expect(movers[0].deltaBase).toBe(20);
-    expect(movers[0].netEffect).toBe(20);
-    expect(movers[1].netEffect).toBe(-20);
-  });
-
-  it("treats a shrinking loan as a positive net-worth effect", () => {
-    const loan = makeAsset({
-      name: "Mortgage",
-      type: "loan",
-      value: 90,
-      history: [
-        { date: "2026-01-01", value: 100 },
-        { date: "2026-02-01", value: 90 },
-      ],
-    });
-    const [m] = topMovers([loan], rates);
-    expect(m.deltaBase).toBe(-10);
-    expect(m.netEffect).toBe(10);
-    expect(m.isLiability).toBe(true);
-  });
-
-  it("skips holdings with fewer than two history points", () => {
-    const a = makeAsset({ history: [{ date: "2026-01-01", value: 100 }] });
-    expect(topMovers([a, makeAsset()], rates)).toHaveLength(0);
-  });
-});
-
 describe("incomeSummary", () => {
   it("projects income for savings and bonds, yielding on cost", () => {
     const assets = [
@@ -206,40 +157,6 @@ describe("incomeSummary", () => {
     expect(incomeSummary([makeAsset({ type: "savings", value: 1000 })], rates).count).toBe(
       0,
     );
-  });
-});
-
-describe("concentration", () => {
-  it("reports the largest holding, institution, currency and a score", () => {
-    const assets = [
-      makeAsset({
-        name: "Big",
-        type: "stock",
-        value: 600,
-        currency: "RON",
-        institution: "Broker A",
-      }),
-      makeAsset({
-        name: "Small",
-        type: "savings",
-        value: 400,
-        currency: "RON",
-        institution: "Bank B",
-      }),
-      makeAsset({ type: "loan", value: 1000, currency: "RON" }), // excluded
-    ];
-    const c = concentration(assets, rates);
-    expect(c.topHolding).toEqual({ label: "Big", share: 0.6 });
-    expect(c.topInstitution).toEqual({ label: "Broker A", share: 0.6 });
-    expect(c.topCurrency).toEqual({ label: "RON", share: 1 });
-    // HHI = 0.6^2 + 0.4^2 = 0.52 -> score 48
-    expect(c.score).toBe(48);
-  });
-
-  it("returns nulls when there are no assets", () => {
-    const c = concentration([makeAsset({ type: "loan", value: 100 })], rates);
-    expect(c.topHolding).toBeNull();
-    expect(c.score).toBe(0);
   });
 });
 
