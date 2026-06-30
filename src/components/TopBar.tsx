@@ -10,7 +10,7 @@ import { SettingsMenu } from "./SettingsMenu";
 
 export function TopBar() {
   const { assets, mode } = useCapital();
-  const { eurRate, ratesLive, rateSource } = useCurrency();
+  const { eurRate, usdRate, ratesLive, rateSource, refreshing, refresh } = useCurrency();
 
   const lastUpdated = assets.length
     ? Math.max(...assets.map((a) => a.updatedAt))
@@ -29,23 +29,44 @@ export function TopBar() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        <span
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-ink-850 px-2.5 py-1.5 text-xs text-slate-400"
-          title={ratesLive ? `Live EUR/RON via ${rateSource}` : "Offline fallback rate"}
+        <button
+          type="button"
+          onClick={refresh}
+          disabled={refreshing}
+          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-ink-850 px-2.5 py-1.5 text-xs text-slate-400 transition hover:border-white/20 hover:bg-ink-800 disabled:cursor-not-allowed disabled:opacity-70"
+          title={
+            refreshing
+              ? "Refreshing FX rates…"
+              : ratesLive
+                ? `Live EUR & USD / RON via ${rateSource} · click to refresh`
+                : "Offline fallback rates · click to refresh"
+          }
         >
           <RefreshCw
             size={12}
-            className={ratesLive ? "text-brand-400" : "text-slate-500"}
+            className={
+              refreshing
+                ? "animate-spin text-brand-400"
+                : ratesLive
+                  ? "text-brand-400"
+                  : "text-slate-500"
+            }
           />
           1&nbsp;EUR&nbsp;=&nbsp;
           <span className="font-semibold text-slate-200 tabular">
             {eurRate.toFixed(2)}
           </span>
+          <span className="hidden sm:inline">
+            &nbsp;·&nbsp;1&nbsp;USD&nbsp;=&nbsp;
+            <span className="font-semibold text-slate-200 tabular">
+              {usdRate.toFixed(2)}
+            </span>
+          </span>
           &nbsp;RON
           {ratesLive && (
             <span className="hidden text-slate-500 lg:inline">· {rateSource}</span>
           )}
-        </span>
+        </button>
 
         <span
           className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-ink-850 px-2.5 py-1.5 text-xs text-slate-400"

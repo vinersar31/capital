@@ -10,11 +10,13 @@ import type { Currency } from "@/lib/types";
 const CURRENCY_COLOR: Record<Currency, string> = {
   RON: "#34d399",
   EUR: "#38bdf8",
+  USD: "#f59e0b",
 };
 
 const CURRENCY_LABEL: Record<Currency, string> = {
   RON: "Romanian Leu",
   EUR: "Euro",
+  USD: "US Dollar",
 };
 
 export function CurrencyChart() {

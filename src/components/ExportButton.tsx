@@ -11,7 +11,7 @@ type Status = "idle" | "sending" | "sent" | "error";
 
 export function ExportButton() {
   const { assets, snapshots } = useCapital();
-  const { eurRate } = useCurrency();
+  const { rates } = useCurrency();
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState<string | null>(null);
 
@@ -27,7 +27,7 @@ export function ExportButton() {
       const res = await fetch("/api/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assets, snapshots, eurRate }),
+        body: JSON.stringify({ assets, snapshots, rates }),
       });
       const data = (await res.json()) as {
         ok?: boolean;

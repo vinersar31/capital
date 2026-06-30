@@ -1,19 +1,34 @@
-import type { Asset, Snapshot } from "../types";
+import { CURRENCIES, type Asset, type Snapshot } from "../types";
+import { DEFAULT_RATES_TO_BASE, type RatesToBase } from "../currency";
 
 export interface ParsedExport {
   assets: Asset[];
   snapshots: Snapshot[];
-  /** RON per 1 EUR. */
-  eurRate: number;
+  /** RON per 1 unit of each currency. */
+  rates: RatesToBase;
 }
 
 export type ParseResult =
   | { ok: true; data: ParsedExport }
   | { ok: false; status: number; error: string };
 
+/** Validate the posted rate map, falling back to safe defaults. */
+function parseRates(input: unknown): RatesToBase {
+  const out: RatesToBase = { ...DEFAULT_RATES_TO_BASE };
+  if (input && typeof input === "object") {
+    const map = input as Record<string, unknown>;
+    for (const c of CURRENCIES) {
+      const v = Number(map[c]);
+      if (Number.isFinite(v) && v > 0) out[c] = v;
+    }
+  }
+  out.RON = 1;
+  return out;
+}
+
 /** Validate and normalize the JSON body used by the export endpoint. */
 export async function parseExportRequest(req: Request): Promise<ParseResult> {
-  let body: { assets?: unknown; snapshots?: unknown; eurRate?: unknown };
+  let body: { assets?: unknown; snapshots?: unknown; rates?: unknown };
   try {
     body = await req.json();
   } catch {
@@ -31,9 +46,9 @@ export async function parseExportRequest(req: Request): Promise<ParseResult> {
   const snapshots = Array.isArray(body.snapshots)
     ? (body.snapshots as Snapshot[])
     : [];
-  const eurRate = Number(body.eurRate) > 0 ? Number(body.eurRate) : 5.24;
+  const rates = parseRates(body.rates);
 
-  return { ok: true, data: { assets, snapshots, eurRate } };
+  return { ok: true, data: { assets, snapshots, rates } };
 }
 
 export function reportFilename(): string {

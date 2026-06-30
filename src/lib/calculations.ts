@@ -89,3 +89,63 @@ export function changeFraction(current: number, previous: number): number {
   if (!previous) return 0;
   return (current - previous) / Math.abs(previous);
 }
+
+export interface AssetGain {
+  /** True when a positive cost basis is set and gain/loss is meaningful. */
+  hasCost: boolean;
+  /** Current value in base currency. */
+  valueBase: number;
+  /** Cost basis in base currency. */
+  costBase: number;
+  /** valueBase − costBase (can be negative). */
+  gain: number;
+  /** gain / costBase (0 when no cost basis). */
+  gainFraction: number;
+}
+
+/** Unrealized gain/loss for a single (non-liability) asset, in base currency. */
+export function assetGain(asset: Asset, rates: RatesToBase): AssetGain {
+  const valueBase = toBase(asset.value, asset.currency, rates);
+  const hasCost =
+    !isLiability(asset.type) &&
+    typeof asset.costBasis === "number" &&
+    asset.costBasis > 0;
+  const costBase = hasCost
+    ? toBase(asset.costBasis as number, asset.currency, rates)
+    : 0;
+  const gain = hasCost ? valueBase - costBase : 0;
+  const gainFraction = hasCost && costBase ? gain / costBase : 0;
+  return { hasCost, valueBase, costBase, gain, gainFraction };
+}
+
+export interface PortfolioGains {
+  /** Current value of assets that have a cost basis, base currency. */
+  value: number;
+  /** Total invested (cost basis) of those assets, base currency. */
+  cost: number;
+  /** value − cost. */
+  gain: number;
+  /** gain / cost. */
+  gainFraction: number;
+  /** How many holdings contributed a cost basis. */
+  count: number;
+}
+
+/** Aggregate unrealized gain/loss across every asset that has a cost basis. */
+export function portfolioGains(
+  assets: Asset[],
+  rates: RatesToBase,
+): PortfolioGains {
+  let value = 0;
+  let cost = 0;
+  let count = 0;
+  for (const a of assets) {
+    const g = assetGain(a, rates);
+    if (!g.hasCost) continue;
+    value += g.valueBase;
+    cost += g.costBase;
+    count += 1;
+  }
+  const gain = value - cost;
+  return { value, cost, gain, gainFraction: cost ? gain / cost : 0, count };
+}

@@ -4,7 +4,7 @@ import { ArrowDownRight, ArrowUpRight, Minus, TrendingDown, TrendingUp } from "l
 import clsx from "clsx";
 import { useCapital } from "@/hooks/useCapital";
 import { useCurrency } from "@/hooks/useCurrency";
-import { changeFraction, computeTotals } from "@/lib/calculations";
+import { changeFraction, computeTotals, portfolioGains } from "@/lib/calculations";
 import { formatMoney, formatSignedPercent } from "@/lib/format";
 
 export function HeroTotal() {
@@ -15,6 +15,12 @@ export function HeroTotal() {
   const netDisplay = baseToDisplay(totals.netWorth);
   const assetsDisplay = baseToDisplay(totals.assets);
   const liabilitiesDisplay = baseToDisplay(totals.liabilities);
+
+  const gains = portfolioGains(assets, rates);
+  const gainDisplay = baseToDisplay(gains.gain);
+  const showPnl = gains.count > 0;
+  const pnlUp = gains.gain > 0.0001;
+  const pnlDown = gains.gain < -0.0001;
 
   const sorted = [...snapshots].sort((a, b) => a.date.localeCompare(b.date));
   const current = sorted.length ? sorted[sorted.length - 1].netWorth : totals.netWorth;
@@ -56,7 +62,12 @@ export function HeroTotal() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div
+          className={clsx(
+            "grid gap-3 sm:gap-4",
+            showPnl ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2",
+          )}
+        >
           <div className="rounded-xl border border-white/5 bg-ink-850/60 px-4 py-3">
             <div className="flex items-center gap-1.5 text-brand-300">
               <TrendingUp size={14} />
@@ -76,6 +87,44 @@ export function HeroTotal() {
               {formatMoney(liabilitiesDisplay, display)}
             </p>
           </div>
+          {showPnl && (
+            <div className="col-span-2 rounded-xl border border-white/5 bg-ink-850/60 px-4 py-3 sm:col-span-1">
+              <div
+                className={clsx(
+                  "flex items-center gap-1.5",
+                  pnlUp ? "text-brand-300" : pnlDown ? "text-rose-300" : "text-slate-300",
+                )}
+              >
+                {pnlUp ? (
+                  <TrendingUp size={14} />
+                ) : pnlDown ? (
+                  <TrendingDown size={14} />
+                ) : (
+                  <Minus size={14} />
+                )}
+                <span
+                  className={clsx(
+                    "stat-label opacity-80",
+                    pnlUp ? "text-brand-300" : pnlDown ? "text-rose-300" : "text-slate-300",
+                  )}
+                >
+                  Unrealized P&amp;L
+                </span>
+              </div>
+              <p
+                className={clsx(
+                  "mt-1 text-lg font-semibold tabular sm:text-xl",
+                  pnlUp ? "text-brand-300" : pnlDown ? "text-rose-300" : "text-white",
+                )}
+              >
+                {gainDisplay >= 0 ? "+" : "−"}
+                {formatMoney(Math.abs(gainDisplay), display)}
+              </p>
+              <p className="mt-0.5 text-xs text-slate-500">
+                {formatSignedPercent(gains.gainFraction)} on cost
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>

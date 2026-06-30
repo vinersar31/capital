@@ -10,7 +10,7 @@ type Status = "idle" | "working" | "error";
 
 export function DownloadButton() {
   const { assets, snapshots } = useCapital();
-  const { eurRate } = useCurrency();
+  const { rates } = useCurrency();
   const [status, setStatus] = useState<Status>("idle");
 
   const download = async () => {
@@ -18,7 +18,7 @@ export function DownloadButton() {
     try {
       // Generated client-side so it also works on static hosts (GitHub Pages).
       const { buildWorkbook } = await import("@/lib/export/workbook");
-      const bytes = await buildWorkbook({ assets, snapshots, eurRate });
+      const bytes = await buildWorkbook({ assets, snapshots, rates });
       const blob = new Blob([bytes as unknown as BlobPart], {
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       });

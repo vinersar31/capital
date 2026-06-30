@@ -5,31 +5,44 @@ export const dynamic = "force-dynamic";
 
 // BNR (National Bank of Romania) official daily reference rates, served from
 // their dedicated XML endpoint and updated each banking day shortly after 13:00
-// (RO time). The EUR value is already "RON per 1 EUR" — exactly what we need.
+// (RO time). Values are "RON per 1 unit", so EUR/USD are used as-is.
 const BNR_URL = "https://curs.bnr.ro/nbrfxrates.xml";
 const TTL_MS = 60 * 60 * 1000; // cache 1h — BNR only updates once per business day
 const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-let cache: { rate: number; date: string; ts: number } | null = null;
+let cache: { eur: number; usd: number; date: string; ts: number } | null = null;
 
 /**
- * BNR publishes RON-based reference rates as:
- *   <Cube date="2026-06-29">
- *     <Rate currency="EUR">5.2430</Rate>
- *     ...
- * EUR never carries a `multiplier` attribute, so the value is the EUR→RON rate.
+ * Read one currency's "RON per 1 unit" value from the BNR XML. BNR expresses
+ * rates as RON per unit; some currencies carry a `multiplier` (e.g. 100) which
+ * we divide back out. EUR and USD have no multiplier.
  */
-function parseEurRon(xml: string): { rate: number; date: string } | null {
-  const rateMatch = xml.match(/<Rate\s+currency="EUR"[^>]*>\s*([\d.]+)\s*<\/Rate>/);
-  if (!rateMatch) return null;
-  const rate = Number(rateMatch[1]);
-  if (!Number.isFinite(rate) || rate <= 0) return null;
-  const date = xml.match(/<Cube\s+date="(\d{4}-\d{2}-\d{2})"/)?.[1] ?? "";
-  return { rate, date };
+function parseRate(xml: string, currency: string): number | null {
+  const m = xml.match(
+    new RegExp(`<Rate\\s+currency="${currency}"([^>]*)>\\s*([\\d.]+)\\s*</Rate>`),
+  );
+  if (!m) return null;
+  const multiplier = Number(m[1].match(/multiplier="(\d+)"/)?.[1] ?? 1) || 1;
+  const rate = Number(m[2]) / multiplier;
+  return Number.isFinite(rate) && rate > 0 ? rate : null;
 }
 
-async function fetchBnrEurRon(): Promise<{ rate: number; date: string } | null> {
+function parseRates(
+  xml: string,
+): { eur: number; usd: number; date: string } | null {
+  const eur = parseRate(xml, "EUR");
+  if (eur == null) return null;
+  const usd = parseRate(xml, "USD") ?? 0;
+  const date = xml.match(/<Cube\s+date="(\d{4}-\d{2}-\d{2})"/)?.[1] ?? "";
+  return { eur, usd, date };
+}
+
+async function fetchBnrRates(): Promise<{
+  eur: number;
+  usd: number;
+  date: string;
+} | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8000);
   try {
@@ -39,18 +52,21 @@ async function fetchBnrEurRon(): Promise<{ rate: number; date: string } | null> 
       signal: controller.signal,
     });
     if (!res.ok) return null;
-    return parseEurRon(await res.text());
+    return parseRates(await res.text());
   } finally {
     clearTimeout(timeout);
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
+  // A `?force=1` flag (sent by the manual "refresh" click) bypasses the cache.
+  const force = new URL(req.url).searchParams.has("force");
   const now = Date.now();
-  if (cache && now - cache.ts < TTL_MS) {
+  if (!force && cache && now - cache.ts < TTL_MS) {
     return NextResponse.json({
       ok: true,
-      rate: cache.rate,
+      eur: cache.eur,
+      usd: cache.usd,
       date: cache.date,
       source: "BNR",
       cached: true,
@@ -58,18 +74,19 @@ export async function GET() {
   }
 
   try {
-    const parsed = await fetchBnrEurRon();
-    if (parsed && parsed.rate > 0) {
-      cache = { rate: parsed.rate, date: parsed.date, ts: now };
+    const parsed = await fetchBnrRates();
+    if (parsed && parsed.eur > 0) {
+      cache = { eur: parsed.eur, usd: parsed.usd, date: parsed.date, ts: now };
       return NextResponse.json({
         ok: true,
-        rate: parsed.rate,
+        eur: parsed.eur,
+        usd: parsed.usd,
         date: parsed.date,
         source: "BNR",
       });
     }
     return NextResponse.json(
-      { ok: false, error: "Could not read EUR/RON from BNR." },
+      { ok: false, error: "Could not read rates from BNR." },
       { status: 502 },
     );
   } catch (e) {

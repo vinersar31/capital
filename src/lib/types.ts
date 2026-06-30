@@ -1,9 +1,9 @@
 // Core domain types for the Capital dashboard.
 
 /** Currencies supported by the app. "RON" is the Romanian Leu (LEI). */
-export type Currency = "RON" | "EUR";
+export type Currency = "RON" | "EUR" | "USD";
 
-export const CURRENCIES: Currency[] = ["RON", "EUR"];
+export const CURRENCIES: Currency[] = ["RON", "EUR", "USD"];
 
 /** High-level asset categories shown on the dashboard. */
 export type AssetType =
@@ -53,6 +53,10 @@ export interface Asset {
   quantity?: number;
   /** Optional annual interest rate in % (savings/bonds/loans). */
   interestRate?: number;
+  /** Total amount invested / originally paid, in `currency`. Enables gain/loss. */
+  costBasis?: number;
+  /** Acquisition date (YYYY-MM-DD), used for holding period / returns. */
+  acquiredAt?: string;
   notes?: string;
   /** Recorded value over time (own currency), oldest first. */
   history?: ValuePoint[];

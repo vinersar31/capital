@@ -11,6 +11,7 @@ export const BASE_CURRENCY: Currency = "RON";
 export const DEFAULT_RATES_TO_BASE: Record<Currency, number> = {
   RON: 1,
   EUR: 5.24,
+  USD: 4.6,
 };
 
 export type RatesToBase = Record<Currency, number>;
@@ -44,15 +45,26 @@ export function toBase(amount: number, from: Currency, rates: RatesToBase): numb
  * (works on static hosts), and finally an offline default — so the app never
  * gets stuck on a stale hard-coded number.
  */
-export async function fetchRatesToBase(): Promise<RateResult> {
-  // 1) BNR reference rate, proxied by our server route (skipped on static export).
+export async function fetchRatesToBase(force = false): Promise<RateResult> {
+  // 1) BNR reference rates, proxied by our server route (skipped on static export).
   if (!IS_STATIC_EXPORT) {
     try {
-      const res = await fetch("/api/fx", { cache: "no-store" });
+      const res = await fetch(force ? "/api/fx?force=1" : "/api/fx", { cache: "no-store" });
       if (res.ok) {
-        const data: { ok?: boolean; rate?: number; source?: string } = await res.json();
-        if (data.ok && typeof data.rate === "number" && data.rate > 0) {
-          return { rates: { RON: 1, EUR: data.rate }, source: data.source ?? "BNR" };
+        const data: { ok?: boolean; eur?: number; usd?: number; source?: string } =
+          await res.json();
+        if (data.ok && typeof data.eur === "number" && data.eur > 0) {
+          return {
+            rates: {
+              RON: 1,
+              EUR: data.eur,
+              USD:
+                typeof data.usd === "number" && data.usd > 0
+                  ? data.usd
+                  : DEFAULT_RATES_TO_BASE.USD,
+            },
+            source: data.source ?? "BNR",
+          };
         }
       }
     } catch {
@@ -60,17 +72,29 @@ export async function fetchRatesToBase(): Promise<RateResult> {
     }
   }
 
-  // 2) Frankfurter (ECB reference rates) — keyless and CORS-enabled.
+  // 2) Frankfurter (ECB reference rates) — keyless and CORS-enabled. We request
+  //    RON-based rates and invert them into "RON per unit".
   try {
     const res = await fetch(
-      "https://api.frankfurter.app/latest?from=EUR&to=RON",
+      "https://api.frankfurter.app/latest?from=RON&to=EUR,USD",
       { cache: "no-store" },
     );
     if (res.ok) {
-      const data: { rates?: { RON?: number } } = await res.json();
-      const eur = data.rates?.RON;
-      if (typeof eur === "number" && eur > 0) {
-        return { rates: { RON: 1, EUR: eur }, source: "ECB" };
+      const data: { rates?: { EUR?: number; USD?: number } } = await res.json();
+      const eurPerRon = data.rates?.EUR;
+      const usdPerRon = data.rates?.USD;
+      if (typeof eurPerRon === "number" && eurPerRon > 0) {
+        return {
+          rates: {
+            RON: 1,
+            EUR: 1 / eurPerRon,
+            USD:
+              typeof usdPerRon === "number" && usdPerRon > 0
+                ? 1 / usdPerRon
+                : DEFAULT_RATES_TO_BASE.USD,
+          },
+          source: "ECB",
+        };
       }
     }
   } catch {

@@ -28,7 +28,7 @@ function currentMonthKey(): string {
  */
 export function useAutoEmail() {
   const { assets, snapshots, loading } = useCapital();
-  const { eurRate } = useCurrency();
+  const { rates } = useCurrency();
 
   const [enabled, setEnabledState] = useState(true);
   const [hydrated, setHydrated] = useState(false);
@@ -62,7 +62,7 @@ export function useAutoEmail() {
       const res = await fetch("/api/export", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ assets, snapshots, eurRate }),
+        body: JSON.stringify({ assets, snapshots, rates }),
       });
       const data = (await res.json().catch(() => ({}))) as {
         ok?: boolean;
@@ -85,7 +85,7 @@ export function useAutoEmail() {
       setMessage("Network error while sending.");
       return false;
     }
-  }, [assets, snapshots, eurRate]);
+  }, [assets, snapshots, rates]);
 
   // Fire once per session when a new month is due.
   useEffect(() => {

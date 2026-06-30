@@ -7,7 +7,8 @@ import { useCapital } from "@/hooks/useCapital";
 import { useCurrency } from "@/hooks/useCurrency";
 import { ASSET_META, PILLAR_META } from "@/lib/asset-meta";
 import { ASSET_TYPES, isLiability, type Asset, type AssetType } from "@/lib/types";
-import { formatMoney } from "@/lib/format";
+import { assetGain } from "@/lib/calculations";
+import { formatMoney, formatSignedPercent } from "@/lib/format";
 import { AssetIcon } from "./AssetIcon";
 import { AssetFormModal } from "./AssetFormModal";
 import { Sparkline } from "./Sparkline";
@@ -18,7 +19,7 @@ type Filter = AssetType | "all";
 
 export function AssetsPanel() {
   const { assets, deleteAsset } = useCapital();
-  const { display, toDisplay, toBaseCurrency } = useCurrency();
+  const { display, toDisplay, toBaseCurrency, baseToDisplay, rates } = useCurrency();
 
   const [filter, setFilter] = useState<Filter>("all");
   const [modal, setModal] = useState<{ open: boolean; initial: Asset | null }>({
@@ -118,6 +119,7 @@ export function AssetsPanel() {
             const meta = ASSET_META[asset.type];
             const liability = isLiability(asset.type);
             const displayValue = toDisplay(asset.value, asset.currency);
+            const gain = assetGain(asset, rates);
             const sub = subtitle(asset);
             return (
               <div
@@ -162,10 +164,29 @@ export function AssetsPanel() {
                     {liability ? "−" : ""}
                     {formatMoney(displayValue, display)}
                   </p>
-                  {asset.currency !== display && (
-                    <p className="text-xs text-slate-500 tabular">
-                      {formatMoney(asset.value, asset.currency)}
+                  {gain.hasCost ? (
+                    <p
+                      className={clsx(
+                        "text-xs font-medium tabular",
+                        gain.gain > 0
+                          ? "text-brand-300"
+                          : gain.gain < 0
+                            ? "text-rose-300"
+                            : "text-slate-500",
+                      )}
+                      title={`${gain.gain >= 0 ? "+" : "−"}${formatMoney(
+                        Math.abs(baseToDisplay(gain.gain)),
+                        display,
+                      )} vs cost`}
+                    >
+                      {formatSignedPercent(gain.gainFraction)}
                     </p>
+                  ) : (
+                    asset.currency !== display && (
+                      <p className="text-xs text-slate-500 tabular">
+                        {formatMoney(asset.value, asset.currency)}
+                      </p>
+                    )
                   )}
                 </div>
 

@@ -7,6 +7,7 @@ import { ASSET_META, PILLAR_META } from "@/lib/asset-meta";
 import {
   ASSET_TYPES,
   CURRENCIES,
+  isLiability,
   type Asset,
   type AssetDraft,
   type AssetType,
@@ -41,6 +42,8 @@ export function AssetFormModal({ open, initial, onClose }: Props) {
   const [pillar, setPillar] = useState<PensionPillar>("pilon2");
   const [quantity, setQuantity] = useState("");
   const [interestRate, setInterestRate] = useState("");
+  const [costBasis, setCostBasis] = useState("");
+  const [acquiredAt, setAcquiredAt] = useState("");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -56,6 +59,8 @@ export function AssetFormModal({ open, initial, onClose }: Props) {
       setPillar(initial.pillar ?? "pilon2");
       setQuantity(initial.quantity != null ? String(initial.quantity) : "");
       setInterestRate(initial.interestRate != null ? String(initial.interestRate) : "");
+      setCostBasis(initial.costBasis != null ? String(initial.costBasis) : "");
+      setAcquiredAt(initial.acquiredAt ?? "");
       setNotes(initial.notes ?? "");
     } else {
       setName("");
@@ -66,6 +71,8 @@ export function AssetFormModal({ open, initial, onClose }: Props) {
       setPillar("pilon2");
       setQuantity("");
       setInterestRate("");
+      setCostBasis("");
+      setAcquiredAt("");
       setNotes("");
     }
     setError(null);
@@ -85,6 +92,7 @@ export function AssetFormModal({ open, initial, onClose }: Props) {
   const showQuantity = type === "stock" || type === "bond";
   const showRate = type === "savings" || type === "bond" || type === "loan";
   const showPillar = type === "pension";
+  const showCost = !isLiability(type);
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -107,6 +115,8 @@ export function AssetFormModal({ open, initial, onClose }: Props) {
       pillar: showPillar ? pillar : undefined,
       quantity: showQuantity && quantity ? toNumber(quantity) : undefined,
       interestRate: showRate && interestRate ? toNumber(interestRate) : undefined,
+      costBasis: showCost && costBasis ? toNumber(costBasis) : undefined,
+      acquiredAt: showCost && acquiredAt ? acquiredAt : undefined,
       notes: notes.trim() || undefined,
     };
 
@@ -296,6 +306,37 @@ export function AssetFormModal({ open, initial, onClose }: Props) {
                 onChange={(e) => setInstitution(e.target.value)}
                 placeholder="Fund manager (e.g. NN, Allianz)"
               />
+            </div>
+          )}
+
+          {showCost && (
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelClass} htmlFor="asset-cost">
+                  {type === "property" ? "Purchase price" : "Invested"}{" "}
+                  <span className="text-slate-600">({currency}, optional)</span>
+                </label>
+                <input
+                  id="asset-cost"
+                  className={inputClass}
+                  value={costBasis}
+                  onChange={(e) => setCostBasis(e.target.value)}
+                  inputMode="decimal"
+                  placeholder="Cost basis"
+                />
+              </div>
+              <div>
+                <label className={labelClass} htmlFor="asset-acquired">
+                  Acquired <span className="text-slate-600">(optional)</span>
+                </label>
+                <input
+                  id="asset-acquired"
+                  type="date"
+                  className={inputClass}
+                  value={acquiredAt}
+                  onChange={(e) => setAcquiredAt(e.target.value)}
+                />
+              </div>
             </div>
           )}
 

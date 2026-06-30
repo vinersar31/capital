@@ -1,13 +1,14 @@
 import ExcelJS from "exceljs";
-import type { Asset, Snapshot } from "../types";
+import type { Asset, Currency, Snapshot } from "../types";
 import { isLiability } from "../types";
+import { toBase, type RatesToBase } from "../currency";
 import { ASSET_META, PILLAR_META } from "../asset-meta";
 
 export interface WorkbookInput {
   assets: Asset[];
   snapshots: Snapshot[];
-  /** RON per 1 EUR. */
-  eurRate: number;
+  /** RON per 1 unit of each currency. */
+  rates: RatesToBase;
   generatedAt?: Date;
 }
 
@@ -20,19 +21,29 @@ const MONEY2 = "#,##0.00";
  * browser (client-side download).
  */
 export async function buildWorkbook(input: WorkbookInput): Promise<Uint8Array> {
-  const { assets, snapshots, eurRate } = input;
+  const { assets, snapshots, rates } = input;
   const generatedAt = input.generatedAt ?? new Date();
-  const toRON = (value: number, currency: string) =>
-    currency === "EUR" ? value * eurRate : value;
+  const toRON = (value: number, currency: Currency) =>
+    toBase(value, currency, rates);
 
   let assetTotal = 0;
   let liabilityTotal = 0;
+  let investedTotal = 0;
+  let investedValueTotal = 0;
   for (const a of assets) {
     const ron = toRON(a.value, a.currency);
-    if (isLiability(a.type)) liabilityTotal += ron;
-    else assetTotal += ron;
+    if (isLiability(a.type)) {
+      liabilityTotal += ron;
+    } else {
+      assetTotal += ron;
+      if (typeof a.costBasis === "number" && a.costBasis > 0) {
+        investedTotal += toRON(a.costBasis, a.currency);
+        investedValueTotal += ron;
+      }
+    }
   }
   const netWorth = assetTotal - liabilityTotal;
+  const unrealizedGain = investedValueTotal - investedTotal;
 
   const wb = new ExcelJS.Workbook();
   wb.creator = "Capital";
@@ -47,13 +58,18 @@ export async function buildWorkbook(input: WorkbookInput): Promise<Uint8Array> {
   summary.addRow({ k: "Capital report" }).font = { bold: true, size: 16 };
   const genRow = summary.addRow({ k: "Generated", v: generatedAt });
   genRow.getCell(2).numFmt = "yyyy-mm-dd hh:mm";
-  summary.addRow({ k: "EUR → RON rate", v: eurRate }).getCell(2).numFmt = MONEY2;
+  summary.addRow({ k: "EUR → RON rate", v: rates.EUR }).getCell(2).numFmt = MONEY2;
+  summary.addRow({ k: "USD → RON rate", v: rates.USD }).getCell(2).numFmt = MONEY2;
   summary.addRow({});
   const summaryRows: Array<[string, number, boolean]> = [
     ["Total assets (RON)", assetTotal, false],
     ["Total liabilities (RON)", liabilityTotal, false],
     ["Net worth (RON)", netWorth, true],
   ];
+  if (investedTotal > 0) {
+    summaryRows.push(["Invested / cost (RON)", investedTotal, false]);
+    summaryRows.push(["Unrealized gain (RON)", unrealizedGain, false]);
+  }
   for (const [k, v, bold] of summaryRows) {
     const row = summary.addRow({ k, v });
     row.getCell(2).numFmt = MONEY;
@@ -70,13 +86,24 @@ export async function buildWorkbook(input: WorkbookInput): Promise<Uint8Array> {
     { header: "Currency", key: "currency", width: 10 },
     { header: "Value", key: "value", width: 14 },
     { header: "Value (RON)", key: "valueRon", width: 16 },
+    { header: "Cost basis", key: "cost", width: 14 },
+    { header: "Cost (RON)", key: "costRon", width: 16 },
+    { header: "Gain (RON)", key: "gainRon", width: 16 },
+    { header: "Gain %", key: "gainPct", width: 10 },
     { header: "Units", key: "quantity", width: 10 },
     { header: "Interest %", key: "interest", width: 11 },
+    { header: "Acquired", key: "acquired", width: 14 },
     { header: "Updated", key: "updated", width: 14 },
   ];
   holdings.getRow(1).font = { bold: true };
   holdings.views = [{ state: "frozen", ySplit: 1 }];
   for (const a of assets) {
+    const valueRon = toRON(a.value, a.currency);
+    const hasCost =
+      !isLiability(a.type) && typeof a.costBasis === "number" && a.costBasis > 0;
+    const costRon = hasCost ? toRON(a.costBasis as number, a.currency) : null;
+    const gainRon = costRon != null ? valueRon - costRon : null;
+    const gainPct = costRon ? (valueRon - costRon) / costRon : null;
     holdings.addRow({
       name: a.name,
       category: ASSET_META[a.type]?.label ?? a.type,
@@ -84,14 +111,23 @@ export async function buildWorkbook(input: WorkbookInput): Promise<Uint8Array> {
       institution: a.institution ?? "",
       currency: a.currency,
       value: a.value,
-      valueRon: Math.round(toRON(a.value, a.currency)),
+      valueRon: Math.round(valueRon),
+      cost: hasCost ? a.costBasis : "",
+      costRon: costRon != null ? Math.round(costRon) : "",
+      gainRon: gainRon != null ? Math.round(gainRon) : "",
+      gainPct: gainPct != null ? gainPct : "",
       quantity: a.quantity ?? "",
       interest: a.interestRate ?? "",
+      acquired: a.acquiredAt ?? "",
       updated: a.updatedAt ? new Date(a.updatedAt) : "",
     });
   }
   holdings.getColumn("value").numFmt = MONEY2;
   holdings.getColumn("valueRon").numFmt = MONEY;
+  holdings.getColumn("cost").numFmt = MONEY2;
+  holdings.getColumn("costRon").numFmt = MONEY;
+  holdings.getColumn("gainRon").numFmt = MONEY;
+  holdings.getColumn("gainPct").numFmt = "0.0%";
   holdings.getColumn("updated").numFmt = "yyyy-mm-dd";
 
   // ---- Net worth history ----
